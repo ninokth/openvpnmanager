@@ -1,0 +1,19 @@
+
+
+
+# Ignore logs
+*.log
+
+# Ignore any Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore entire .credentials directory
+.credentials/
+
+# Ignore entire OpenVPN_files directory
+OpenVPN_files/
+
+# Ignore entire code_versions directory
+code_versions/
+
