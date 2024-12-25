@@ -39,26 +39,52 @@ def print_error(msg):
     print(f"{Colors.RED}{msg}{Colors.RESET}")
 
 # Configuration and initialization
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(SCRIPT_DIR, 'openvpn_manager.ini')
+# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# CONFIG_FILE = os.path.join(SCRIPT_DIR, 'openvpn_manager.ini')
+
+def get_config_path():
+    """Get configuration file path checking multiple locations"""
+    # Check for environment variable override
+    if 'OPENVPN_MANAGER_CONFIG' in os.environ:
+        return os.environ['OPENVPN_MANAGER_CONFIG']
+    
+    # Check standard locations in order of preference
+    config_locations = [
+        os.path.expanduser('~/.config/openvpn_manager/config.ini'),
+        '/etc/openvpn_manager/config.ini',
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'openvpn_manager.ini')
+    ]
+    
+    for location in config_locations:
+        if os.path.exists(location):
+            return location
+            
+    # Return default user config path for creation
+    default_path = config_locations[0]
+    default_dir = os.path.dirname(default_path)
+    if not os.path.exists(default_dir):
+        os.makedirs(default_dir, mode=0o755)
+    return default_path
 
 def load_config():
     """Load configuration from INI file, create default if doesn't exist"""
     config = configparser.ConfigParser()
+    config_file = get_config_path()
     
-    if not os.path.exists(CONFIG_FILE):
-        # Create default configuration with environment variables
+    if not os.path.exists(config_file):
+        # Create default configuration
         config['Paths'] = {
             'openvpn_dir': '$HOME/openvpn/OpenVPN_files',
             'credentials_dir': '$HOME/openvpn/.credentials'
         }
         
         # Save default configuration
-        with open(CONFIG_FILE, 'w') as f:
+        os.makedirs(os.path.dirname(config_file), exist_ok=True)
+        with open(config_file, 'w') as f:
             config.write(f)
-        print_success(f"Created default configuration file: {CONFIG_FILE}")
+        print_success(f"Created default configuration file: {config_file}")
     else:
-        config.read(CONFIG_FILE)
+        config.read(config_file)
     
     # Expand environment variables in paths
     openvpn_dir = os.path.expandvars(config['Paths']['openvpn_dir'])
